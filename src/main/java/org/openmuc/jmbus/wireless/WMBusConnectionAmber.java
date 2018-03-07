@@ -59,14 +59,14 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
 
             ByteBuffer discardBuffer = ByteBuffer.allocate(100);
 
-            int b0, b1;
+            byte b0, b1;
             DataInputStream is = getInputStream();
             while (true) {
                 try {
                     this.transportLayer.setTimeout(0);
-                    b0 = is.read();
+                    b0 = (byte) is.read();
                     this.transportLayer.setTimeout(MESSAGE_FRAGEMENT_TIMEOUT);
-                    b1 = is.read();
+                    b1 = (byte) is.read();
 
                     if ((b1 ^ MBUS_BL_CONTROL) == 0) {
                         break;
@@ -76,21 +76,31 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
                         discard(discardBuffer.array(), 0, discardBuffer.position());
                         discardBuffer.clear();
                     }
-                    discardBuffer.put((byte) b0);
-                    discardBuffer.put((byte) b1);
+                    discardBuffer.put(b0);
+                    discardBuffer.put(b1);
                 } catch (InterruptedIOException e) {
                     continue;
                 }
             }
 
-            int len = (b0 & 0xff) + 1;
+            int len = b0 + 1;
             byte[] data = new byte[2 + len];
 
-            data[0] = (byte) b0;
-            data[1] = (byte) b1;
+            data[0] = b0;
+            data[1] = b1;
 
             int readLength = len - 2;
-            int actualLength = is.read(data, 2, readLength);
+            int actualLength;
+            System.err.println("b0=" + b0 + "len=" + len + ", readLength=" + readLength + ", data.length=" + data.length);
+            if (readLength <= 0) {
+                actualLength = -1;
+            } else {
+                try {
+                    actualLength = is.read(data, 2, readLength);
+                } catch (IndexOutOfBoundsException e) {
+                    actualLength = -1;
+                }
+            }
 
             if (readLength != actualLength) {
                 discard(data, 0, actualLength);
@@ -193,7 +203,6 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
         os.write(data);
 
         byte checksum = computeCheckSum(data, computeCheckSum(header, (byte) 0));
-
         os.write(checksum);
 
     }
@@ -215,6 +224,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
      */
     private void reset() throws IOException {
         writeCommand((byte) 0x05, new byte[] {});
+        System.err.println("JMBUS: RESET");
     }
 
     private static byte computeCheckSum(byte[] data, byte checksum) {
