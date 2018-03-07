@@ -110,8 +110,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             int rssiOffset = 74;
             if (rssi >= 128) {
                 signalStrengthInDBm = ((rssi - 256) / 2) - rssiOffset;
-            }
-            else {
+            } else {
                 signalStrengthInDBm = (rssi / 2) - rssiOffset;
             }
 
@@ -159,22 +158,25 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
     @Override
     protected void initializeWirelessTransceiver(WMBusMode mode) throws IOException {
         switch (mode) {
-        case S:
-            amberSetReg((byte) 0x46, (byte) 0x03);
-            break;
-        case T:
-            amberSetReg((byte) 0x46, (byte) 0x08); // T2-OTHER (correct for receiving station in T mode)
-            break;
-        default:
-            String message = MessageFormat.format("wMBUS Mode ''{0}'' is not supported", mode.toString());
-            throw new IOException(message);
+            case S:
+                amberSetReg((byte) 0x46, (byte) 0x03);
+                break;
+            case T:
+                amberSetReg((byte) 0x46, (byte) 0x08); // T2-OTHER (correct for receiving station in T mode)
+                break;
+            case C:
+                amberSetReg((byte) 0x46, (byte) 0x0e); // C2-OTHER (according to device manual)
+                break;
+            default:
+                String message = MessageFormat.format("wMBUS Mode ''{0}'' is not supported", mode.toString());
+                throw new IOException(message);
         }
         amberSetReg((byte) 0x45, (byte) 0x01); // Enable attaching RSSI to message
     }
 
     /**
      * Writes a {@code CMD_SET_REQ} to the Amber module.
-     * 
+     *
      * @param cmd
      *            register address of the Amber module.
      * @param data
@@ -207,7 +209,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
 
     /**
      * Writes a reset command to the Amber module
-     * 
+     *
      * @throws IOException
      *             if the reset command failed.
      */

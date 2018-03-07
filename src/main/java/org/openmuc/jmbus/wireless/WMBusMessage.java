@@ -14,7 +14,7 @@ import org.openmuc.jmbus.VariableDataStructure;
 
 /**
  * Represents a wireless M-Bus link layer message without the CRC checksum.
- * 
+ *
  * {@link WMBusMessage} is structured as follows:
  * <ul>
  * <li>Length (1 byte) - the length (number of bytes) of the complete message without the length byte and the CRC bytes.
@@ -76,7 +76,7 @@ public class WMBusMessage {
 
     /**
      * Get the message as binary large object (byte array).
-     * 
+     *
      * @return the byte array representation of the message.
      */
     public byte[] asBlob() {
@@ -89,7 +89,7 @@ public class WMBusMessage {
 
     /**
      * Get the secondary address.
-     * 
+     *
      * @return the secondary address.
      */
     public SecondaryAddress getSecondaryAddress() {
@@ -98,7 +98,7 @@ public class WMBusMessage {
 
     /**
      * Get the variable data structure of the message.
-     * 
+     *
      * @return the variable data structure.
      */
     public VariableDataStructure getVariableDataResponse() {
@@ -107,7 +107,7 @@ public class WMBusMessage {
 
     /**
      * Returns the received signal string indication (RSSI) in dBm.
-     * 
+     *
      * @return the RSSI.
      */
     public Integer getRssi() {
@@ -122,13 +122,9 @@ public class WMBusMessage {
             builder.append("Message was received with signal strength: ").append(signalStrengthInDBm).append("dBm\n");
         }
 
-        return builder.append("control field: ")
-                .append(String.format("0x%02X", controlField))
-                .append("\nSecondary Address -> ")
-                .append(secondaryAddress)
-                .append("\nVariable Data Response:\n")
-                .append(vdr)
-                .toString();
+        return builder.append("control field: ").append(String.format("0x%02X", controlField))
+                .append("\nSecondary Address -> ").append(secondaryAddress).append("\nVariable Data Response:\n")
+                .append(vdr).toString();
     }
 
 }

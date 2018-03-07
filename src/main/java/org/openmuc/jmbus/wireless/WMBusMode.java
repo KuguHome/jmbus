@@ -9,6 +9,11 @@ package org.openmuc.jmbus.wireless;
  * The wireless M-Bus modes.
  */
 public enum WMBusMode {
+
+    /**
+     * Compact (868.95 MHz). Combination of range (S) and battery efficiency (T). Suitable for frequent sending.
+     */
+    C(0x04),
     /**
      * Frequent (868 MHz). Meter sends data several times/day.
      */
