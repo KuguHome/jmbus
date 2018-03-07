@@ -87,7 +87,9 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             // the & 0xFF converts the byte with range [-128;127] to int but only using the range [0;255] out of its much larger range - it's a Java thing.
             int len = (b0 & 0xff) + 1;
 
-            if (len <= 3) {
+            // min. length not to trip exception on is.read would be 2+1,
+            // but according to Amber stick manual, min. length is 10; shorter messages lead to exceptions in VDR.toString() later
+            if (len <= 10) {
                 System.err.println("short message length received: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len(b0 as uint8 + 1)=" + len);
                 reset();
                 return;
