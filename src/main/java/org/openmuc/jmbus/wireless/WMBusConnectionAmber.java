@@ -90,7 +90,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             // min. length not to trip exception on is.read would be 2+1,
             // but according to Amber stick manual, min. length is 10; shorter messages lead to exceptions in VDR.toString() later
             if (len <= 10) {
-                System.err.println("short message length received: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len(b0 as uint8 + 1)=" + len);
+                //System.err.println("short message length received: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len(b0 as uint8 + 1)=" + len);
                 reset();
                 return;
             }
@@ -101,7 +101,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
 
             int readLength = len - 2;
             int actualLength;
-            System.err.println("new message: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len=" + len + ", readLength=" + readLength + ", data.length=" + data.length);
+            //System.err.println("new message: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len=" + len + ", readLength=" + readLength + ", data.length=" + data.length);
 
             try {
                 actualLength = is.read(data, 2, readLength);
@@ -231,7 +231,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
      */
     private void reset() throws IOException {
         writeCommand((byte) 0x05, new byte[] {});
-        System.err.println("JMBUS: RESET");
+        //System.err.println("JMBUS: RESET");
     }
 
     private static byte computeCheckSum(byte[] data, byte checksum) {
