@@ -59,15 +59,16 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
 
             ByteBuffer discardBuffer = ByteBuffer.allocate(100);
 
-            byte b0, b1;
+            int b0, b1; // must be int not byte, because in Java a byte is not an uint8, but an sint8 and has range from -128 to +127, not 0 to 255.
             DataInputStream is = getInputStream();
             while (true) {
                 try {
                     this.transportLayer.setTimeout(0);
-                    b0 = (byte) is.read();
+                    b0 = is.read();
                     this.transportLayer.setTimeout(MESSAGE_FRAGEMENT_TIMEOUT);
-                    b1 = (byte) is.read();
+                    b1 = is.read();
 
+                    // synchronize to begin of message using 0xFF control message marker
                     if ((b1 ^ MBUS_BL_CONTROL) == 0) {
                         break;
                     }
@@ -76,34 +77,34 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
                         discard(discardBuffer.array(), 0, discardBuffer.position());
                         discardBuffer.clear();
                     }
-                    discardBuffer.put(b0);
-                    discardBuffer.put(b1);
+                    discardBuffer.put((byte) b0);
+                    discardBuffer.put((byte) b1);
                 } catch (InterruptedIOException e) {
                     continue;
                 }
             }
 
-            int len = b0 + 1;
-            if (len < 2) {
+            // the & 0xFF converts the byte with range [-128;127] to int but only using the range [0;255] out of its much larger range - it's a Java thing.
+            int len = (b0 & 0xff) + 1;
+
+            if (len <= 3) {
+                System.err.println("short message length received: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len(b0 as uint8 + 1)=" + len);
                 reset();
                 return;
             }
             byte[] data = new byte[2 + len];
 
-            data[0] = b0;
-            data[1] = b1;
+            data[0] = (byte) b0;
+            data[1] = (byte) b1;
 
             int readLength = len - 2;
             int actualLength;
-            System.err.println("b0=" + b0 + ", len=" + len + ", readLength=" + readLength + ", data.length=" + data.length);
-            if (readLength <= 0) {
+            System.err.println("new message: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len=" + len + ", readLength=" + readLength + ", data.length=" + data.length);
+
+            try {
+                actualLength = is.read(data, 2, readLength);
+            } catch (IndexOutOfBoundsException e) {
                 actualLength = -1;
-            } else {
-                try {
-                    actualLength = is.read(data, 2, readLength);
-                } catch (IndexOutOfBoundsException e) {
-                    actualLength = -1;
-                }
             }
 
             if (readLength != actualLength) {
