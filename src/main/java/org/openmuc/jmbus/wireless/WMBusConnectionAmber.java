@@ -84,6 +84,10 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             }
 
             int len = b0 + 1;
+            if (len < 2) {
+                reset();
+                return;
+            }
             byte[] data = new byte[2 + len];
 
             data[0] = b0;
@@ -91,7 +95,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
 
             int readLength = len - 2;
             int actualLength;
-            System.err.println("b0=" + b0 + "len=" + len + ", readLength=" + readLength + ", data.length=" + data.length);
+            System.err.println("b0=" + b0 + ", len=" + len + ", readLength=" + readLength + ", data.length=" + data.length);
             if (readLength <= 0) {
                 actualLength = -1;
             } else {
