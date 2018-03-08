@@ -1358,7 +1358,7 @@ public class DataRecord {
                         Double dataValue = ((Number) this.dataValue).doubleValue();
                         builder.append(dataValue);
                     }
-                    builder.append(", multiplier-exponent:");
+                    builder.append(", exponent:");
                     //System.out.println("3/4");
                     builder.append(getMultiplierExponent());
                     //System.out.println("4/4");
