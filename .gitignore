@@ -1,9 +1,3 @@
-build
-.metadata
-.project
-.classpath
-.settings
-.gradle
-bin
-doc
-src/docs
+/.gradle/
+.idea
+.iml

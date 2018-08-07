@@ -26,9 +26,11 @@ import org.openmuc.jmbus.internal.cli.IntCliParameter;
 import org.openmuc.jmbus.internal.cli.StringCliParameter;
 import org.openmuc.jmbus.transportlayer.Builder;
 import org.openmuc.jmbus.transportlayer.SerialBuilder;
+import org.openmuc.jmbus.transportlayer.TcpBuilder;
 import org.openmuc.jmbus.wireless.WMBusConnection;
+import org.openmuc.jmbus.wireless.WMBusConnection.WMBusManufacturer;
 import org.openmuc.jmbus.wireless.WMBusConnection.WMBusSerialBuilder;
-import org.openmuc.jmbus.wireless.WMBusConnection.WMBusSerialBuilder.WMBusManufacturer;
+import org.openmuc.jmbus.wireless.WMBusConnection.WMBusTcpBuilder;
 import org.openmuc.jmbus.wireless.WMBusMode;
 
 class ConsoleLineParser {
@@ -42,7 +44,6 @@ class ConsoleLineParser {
     private static byte[] difValue = {};
     private static byte[] vifValue = {};
     private static byte[] dataValue = {};
-    private final String wildcardValue = "ffffffff";
     private WMBusMode wMBusModeValue;
     private final Map<SecondaryAddress, byte[]> keyPairValues = new TreeMap<>();
 
@@ -58,30 +59,39 @@ class ConsoleLineParser {
 
     private final StringCliParameter comPort = new CliParameterBuilder("-cp").setDescription(
             "The serial port or TCP address and port used for communication. Examples Serial: /dev/ttyS0 (Linux) or COM1 (Windows). Example TCP: tcp:192.168.8.2:1084")
-            .setMandatory().buildStringParameter("communication_port");
+            .setMandatory()
+            .buildStringParameter("communication_port");
 
     private final IntCliParameter baudRate = new CliParameterBuilder("-bd")
-            .setDescription("Baud rate of the serial port.").buildIntParameter("baud_rate");
+            .setDescription("Baud rate of the serial port.")
+            .buildIntParameter("baud_rate");
 
     private final StringCliParameter address = new CliParameterBuilder("-a").setDescription(
             "The primary address of the meter. Primary addresses range from 0 to 255. Regular primary address range from 1 to 250. \n\t    Or the secondary address of the meter. Secondary addresses are 8 bytes long and shall be entered in hexadecimal form (e.g. 3a453b4f4f343423)")
-            .setMandatory().buildStringParameter("address");
+            .setMandatory()
+            .buildStringParameter("address");
 
-    private final IntCliParameter timeout = new CliParameterBuilder("-t")
-            .setDescription("The timeout in milli seconds.").buildIntParameter("timeout", 3000);
+    private final IntCliParameter timeout = new CliParameterBuilder("-t").setDescription("The timeout in milliseconds.")
+            .buildIntParameter("timeout", 3000);
+
+    private final IntCliParameter tcpConnectionTimeout = new CliParameterBuilder("-ct")
+            .setDescription("The TCP connection timeout in milliseconds.")
+            .buildIntParameter("connectionTimeout", 10000);
 
     private final FlagCliParameter verbose = new CliParameterBuilder("-v")
-            .setDescription("Enable verbose mode to print debug messages to standard out.").buildFlagParameter();
+            .setDescription("Enable verbose mode to print debug messages to standard out.")
+            .buildFlagParameter();
 
     private final FlagCliParameter disableLinkReset = new CliParameterBuilder("-dlr")
-            .setDescription("Disable link reset in primary mode.").buildFlagParameter();
+            .setDescription("Disable link reset in primary mode.")
+            .buildFlagParameter();
 
     private final FlagCliParameter secondaryScan = new CliParameterBuilder("-s").setDescription("Use secondary scan.")
             .buildFlagParameter();
 
     private final StringCliParameter wildcard = new CliParameterBuilder("-w")
             .setDescription("Use wildcard for region scan of secondary addresses e.g. 15ffffff")
-            .buildStringParameter("wildcard");
+            .buildStringParameter("wildcard", "ffffffff");
 
     private final StringCliParameter dif = new CliParameterBuilder("-dif")
             .setDescription("The data information field. Minimal two hex signs length e.g. 01")
@@ -101,7 +111,8 @@ class ConsoleLineParser {
             .buildStringParameter("transceiver");
 
     private final StringCliParameter wmbusMode = new CliParameterBuilder("-wm").setMandatory()
-            .setDescription("The wM-Bus mode can be S, T or C.").buildStringParameter("wmbus_mode");
+            .setDescription("The wM-Bus mode can be S, T or C.")
+            .buildStringParameter("wmbus_mode");
 
     private final StringCliParameter key = new CliParameterBuilder("-key").setDescription(
             "Address/key pairs that shall be used to decode the incoming messages. \n\t    The secondary address consists of 8 bytes that should be specified in hexadecimal form (1 byte are 2 hex signs). <address_1>:<key_2>;<adress_n+1>:<key_n+1>;...")
@@ -159,57 +170,63 @@ class ConsoleLineParser {
             return;
         }
 
-        try {
-            switch (cliParser.getSelectedGroup().toLowerCase()) {
-                case "read":
-                    CliConnection.read(this, (MBusConnection) builder.build(), cliPrinter);
-                    break;
-                case "write":
-                    CliConnection.write(this, (MBusConnection) builder.build(), cliPrinter);
-                    break;
-                case "scan":
-                    CliConnection.scan(this.wildcard.getValue(), secondaryScan.isSelected(),
-                            (MBusConnection) builder.build(), cliPrinter);
-                    break;
-                case "wmbus":
-                    if (comPortType != CommunicationPort.SERIAL) {
-                        this.cliPrinter.printError("Using wmbus with tcp is not possible, yet.", false);
-                        break;
-                    }
-                    WMBusConnection wmBusConnection = (WMBusConnection) builder.build();
-                    Map<SecondaryAddress, byte[]> keyPairs = getKeyPairs();
-                    for (Entry<SecondaryAddress, byte[]> keyPair : keyPairs.entrySet()) {
-                        wmBusConnection.addKey(keyPair.getKey(), keyPair.getValue());
-                    }
-
-                    WMBusStart.wmbus(wmBusConnection);
-                    break;
-                default:
-                    this.cliPrinter.printError("Unknown group: " + cliParser.getSelectedGroup().toLowerCase(), true);
-            }
-        } catch (IOException e) {
-            this.cliPrinter.printError(e.getMessage(), false);
-        }
-
         if (wildcard.isSelected()) {
             checkWildcard();
         }
 
+        try {
+            switch (cliParser.getSelectedGroup().toLowerCase()) {
+            case "read":
+                CliConnection.read(this, (MBusConnection) builder.build(), cliPrinter);
+                break;
+            case "write":
+                CliConnection.write(this, (MBusConnection) builder.build(), cliPrinter);
+                break;
+            case "scan":
+                CliConnection.scan(this.wildcard.getValue(), secondaryScan.isSelected(),
+                        (MBusConnection) builder.build(), cliPrinter);
+                break;
+            case "wmbus":
+                WMBusConnection wmBusConnection = (WMBusConnection) builder.build();
+                Map<SecondaryAddress, byte[]> keyPairs = getKeyPairs();
+                for (Entry<SecondaryAddress, byte[]> keyPair : keyPairs.entrySet()) {
+                    wmBusConnection.addKey(keyPair.getKey(), keyPair.getValue());
+                }
+
+                WMBusStart.wmbus(wmBusConnection);
+                break;
+            default:
+                this.cliPrinter.printError("Unknown group: " + cliParser.getSelectedGroup().toLowerCase(), true);
+            }
+        } catch (IOException e) {
+            this.cliPrinter.printError(e.getMessage(), false);
+        }
     }
 
     private Builder<?, ?> newBuilder() {
         switch (comPortType) {
-            case TCP:
-                return newTcpBuilder();
+        case TCP:
+            return newTcpBuilder();
 
-            case SERIAL:
-            default:
-                return newSerialBuilder();
+        case SERIAL:
+        default:
+            return newSerialBuilder();
         }
     }
 
     private Builder<?, ?> newTcpBuilder() {
-        return MBusConnection.newTcpBuilder(getHostAddress(), getPort()).setTimeout(getTimeout());
+        TcpBuilder<?, ?> connectionBuilder;
+
+        if (cliParser.getSelectedGroup().equalsIgnoreCase("wmbus")) {
+            WMBusManufacturer wmBusManufacturer = parseManufacturer();
+            connectionBuilder = new WMBusTcpBuilder(wmBusManufacturer, new WMBusStart.WMBusReceiver(this.cliPrinter),
+                    getHostAddress(), getPort()).setMode(getWMBusMode());
+        }
+        else {
+            connectionBuilder = MBusConnection.newTcpBuilder(getHostAddress(), getPort()).setTimeout(getTimeout());
+        }
+        connectionBuilder.setConnectionTimeout(getConnectionTimeout());
+        return connectionBuilder.setTimeout(getTimeout());
     }
 
     private Builder<?, ?> newSerialBuilder() {
@@ -222,7 +239,8 @@ class ConsoleLineParser {
 
             connectionBuilder = new WMBusSerialBuilder(wmBusManufacturer, new WMBusStart.WMBusReceiver(this.cliPrinter),
                     cmmPort).setMode(getWMBusMode());
-        } else {
+        }
+        else {
             connectionBuilder = MBusConnection.newSerialBuilder(cmmPort);
         }
         if (baudRate.isSelected()) {
@@ -234,15 +252,15 @@ class ConsoleLineParser {
 
     private WMBusManufacturer parseManufacturer() {
         switch (getTransceiverString().toLowerCase()) {
-            case "amber":
-                return WMBusManufacturer.AMBER;
-            case "rc":
-                return WMBusManufacturer.RADIO_CRAFTS;
-            case "imst":
-                return WMBusManufacturer.IMST;
-            default:
-                this.cliPrinter.printError("Not supported transceiver.", true);
-                throw new RuntimeException();
+        case "amber":
+            return WMBusManufacturer.AMBER;
+        case "rc":
+            return WMBusManufacturer.RADIO_CRAFTS;
+        case "imst":
+            return WMBusManufacturer.IMST;
+        default:
+            this.cliPrinter.printError("Not supported transceiver.", true);
+            throw new RuntimeException();
         }
     }
 
@@ -282,8 +300,12 @@ class ConsoleLineParser {
         return timeout.getValue();
     }
 
+    public int getConnectionTimeout() {
+        return tcpConnectionTimeout.getValue();
+    }
+
     public String getWildcard() {
-        return wildcardValue;
+        return wildcard.getValue();
     }
 
     public boolean isVerbose() {
@@ -340,9 +362,9 @@ class ConsoleLineParser {
     }
 
     private void checkWildcard() {
-        if (wildcardValue.length() != WILDCARD_MASK_LENGTH) {
+        if (wildcard.getValue().length() != WILDCARD_MASK_LENGTH) {
             this.cliPrinter.printError("Allowed wildcard mask length is " + WILDCARD_MASK_LENGTH + " characters but is "
-                    + wildcardValue.length() + '.', false);
+                    + wildcard.getValue().length() + '.', false);
         }
     }
 
@@ -361,7 +383,8 @@ class ConsoleLineParser {
                 this.cliPrinter.printError("The <secondary_address> parameter contains non hexadecimal character.",
                         true);
             }
-        } else {
+        }
+        else {
             try {
                 primaryAddressValue = Integer.parseInt(address);
             } catch (NumberFormatException e) {
@@ -390,11 +413,13 @@ class ConsoleLineParser {
                 } catch (NumberFormatException e) {
                     this.cliPrinter.printError("Given TCP port is not a number", false);
                 }
-            } else {
+            }
+            else {
                 this.cliPrinter.printError("Address and port are needed for IP communication. eg: 127.0.0.1:1001",
                         true);
             }
-        } else {
+        }
+        else {
             this.cliPrinter.printError("No \":\" in host address:port given. eg: 127.0.0.1:1001", true);
         }
     }
@@ -405,12 +430,14 @@ class ConsoleLineParser {
             String[] keyPair = pair.split(":");
             if (keyPair.length != 2) {
                 this.cliPrinter.printError("A key has to be a secondary address and a key.", true);
-            } else {
+            }
+            else {
                 int secondaryAddressLength = keyPair[0].length();
                 if (secondaryAddressLength != 16) {
                     this.cliPrinter.printError(
                             "The secondary address needs 16 signs, but has " + secondaryAddressLength + '.', true);
-                } else {
+                }
+                else {
                     try {
                         byte[] secondaryAddressbytes = DatatypeConverter.parseHexBinary(keyPair[0]);
                         SecondaryAddress secondaryAddress = SecondaryAddress.newFromWMBusLlHeader(secondaryAddressbytes,
@@ -435,7 +462,8 @@ class ConsoleLineParser {
 
         if (input.length() < 1) {
             this.cliPrinter.printError("Minimal length of <" + inputName + "> is two hex signs.", true);
-        } else {
+        }
+        else {
             try {
                 ret = DatatypeConverter.parseHexBinary(input);
             } catch (IllegalArgumentException e) {

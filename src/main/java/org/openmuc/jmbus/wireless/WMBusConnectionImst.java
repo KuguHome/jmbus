@@ -80,7 +80,8 @@ class WMBusConnectionImst extends AbstractWMBusConnection {
 
                 if (hciMessage.getPayload()[1] == MBUS_BL_CONTROL) {
                     return hciMessage;
-                } else {
+                }
+                else {
                     discard(hciMessage);
                 }
             }
@@ -103,7 +104,8 @@ class WMBusConnectionImst extends AbstractWMBusConnection {
     @Override
     protected void initializeWirelessTransceiver(WMBusMode mode) throws IOException {
 
-        byte[] payload = ByteBuffer.allocate(6).put((byte) 0x00) // NVM Flag: change configuration only temporary
+        byte[] payload = ByteBuffer.allocate(6)
+                .put((byte) 0x00) // NVM Flag: change configuration only temporary
                 .put((byte) 0x03) // IIFlag 1: Bit 0 Device Mode and Bit 1 Radio Mode
                 .put((byte) 0x00) // Device Mode: Meter
                 .put(linkRadioModeFor(mode)) // Link/Radio Mode
@@ -116,15 +118,15 @@ class WMBusConnectionImst extends AbstractWMBusConnection {
 
     private static byte linkRadioModeFor(WMBusMode mode) throws IOException {
         switch (mode) {
-            case S:
-                return 0x01; // Link/Radio Mode: S1-m
-            case T:
-                return 0x04; // Link/Radio Mode: T2
-            case C:
-                return 0x08; // Link/Radio Mode: C2 with telegram format A (C2 + format B = 0x09)
-            default:
-                String msg = MessageFormat.format("wMBUS Mode ''{0}'' is not supported", mode.toString());
-                throw new IOException(msg);
+        case S:
+            return 0x01; // Link/Radio Mode: S1-m
+        case T:
+            return 0x04; // Link/Radio Mode: T2
+        case C:
+            return 0x08; // Link/Radio Mode: C2 with telegram format A (C2 + format B = 0x09)
+        default:
+            String msg = MessageFormat.format("wMBUS Mode ''{0}'' is not supported", mode.toString());
+            throw new IOException(msg);
         }
     }
 
@@ -347,12 +349,23 @@ class WMBusConnectionImst extends AbstractWMBusConnection {
 
         @Override
         public String toString() {
-            return new StringBuilder().append("Control Field: ").append(byteAsHexString(controlField))
-                    .append("\nEndpointID:    ").append(byteAsHexString(endpointID)).append("\nMsg ID:        ")
-                    .append(byteAsHexString(msgId)).append("\nLength:        ").append(length)
-                    .append("\nTimestamp:     ").append(timeStamp).append("\nRSSI:          ").append(rSSI)
-                    .append("\nFCS:           ").append(fCS).append("\nPayload:\n")
-                    .append(DatatypeConverter.printHexBinary(payload)).toString();
+            return new StringBuilder().append("Control Field: ")
+                    .append(byteAsHexString(controlField))
+                    .append("\nEndpointID:    ")
+                    .append(byteAsHexString(endpointID))
+                    .append("\nMsg ID:        ")
+                    .append(byteAsHexString(msgId))
+                    .append("\nLength:        ")
+                    .append(length)
+                    .append("\nTimestamp:     ")
+                    .append(timeStamp)
+                    .append("\nRSSI:          ")
+                    .append(rSSI)
+                    .append("\nFCS:           ")
+                    .append(fCS)
+                    .append("\nPayload:\n")
+                    .append(DatatypeConverter.printHexBinary(payload))
+                    .toString();
         }
 
         private static String byteAsHexString(byte b) {

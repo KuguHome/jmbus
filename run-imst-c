@@ -1,2 +1,0 @@
-java -Djava.library.path=/usr/lib/jni/ -cp cli-app/build/classes/java/main/:build/classes/java/main/:build/libs-all/jrxtx-1.0.0.jar:cli-app/build/libs-all/jrxtx-1.0.0.jar org.openmuc.jmbus.app.ConsoleApp wmbus -tr imst -wm C -v -cp /dev/ttyUSB0
-# Kamstrupzähler @ Leipzig -key "2D2C873258673004:E55840700139C8DB1DEF18B3831583F6"
