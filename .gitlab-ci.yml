@@ -24,6 +24,7 @@ build:
       - build
       - .gradle
   after_script:
+    - chmod -R a+rw build .gradle
     - chmod -R a+rw cli-app/build cli-app/.gradle
   artifacts:
     paths:
