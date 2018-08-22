@@ -92,7 +92,7 @@ repositories {
 }
 
 dependencies {
-  compile group: "org.openmuc", name: "jrxtx", version: "[1.0.1, 1.0.1]"
+  compile group: "org.openmuc", name: "jrxtx", version: '1.0.1'
   
   testCompile group: 'pl.pragmatists', name: 'JUnitParams', version: '1.1.0'
 }
@@ -101,6 +101,7 @@ jar {
   manifest {
     name = "jMBus"
     instruction "Export-Package", "!*.internal.*,*"
+    instruction "Import-Package", "org.openmuc.jrxtx;version=\"[1.0.0, 1.0.2]\""
   }
 }
 
