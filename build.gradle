@@ -77,6 +77,8 @@ configure(javaProjects) {
   }
 
   dependencies {
+    implementation 'com.neuronrobotics:nrjavaserial:3.14.0'
+  
     testCompile group: "junit", name: "junit", version: "4.12"
     itestCompile group: "junit", name: "junit", version: "4.12"
 

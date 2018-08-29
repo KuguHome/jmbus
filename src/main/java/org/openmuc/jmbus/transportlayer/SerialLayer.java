@@ -9,29 +9,40 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.openmuc.jrxtx.SerialPort;
-import org.openmuc.jrxtx.SerialPortBuilder;
+import gnu.io.CommPortIdentifier;
+import gnu.io.NoSuchPortException;
+import gnu.io.PortInUseException;
+import gnu.io.SerialPort;
+import gnu.io.UnsupportedCommOperationException;
 
 class SerialLayer implements TransportLayer {
-    private final SerialPortBuilder serialPortBuilder;
+
     private final int timeout;
 
     private DataOutputStream os;
     private DataInputStream is;
     private SerialPort serialPort;
+	private CommPortIdentifier portIdentifier;
 
-    public SerialLayer(int timeout, SerialPortBuilder serialPortBuilder) {
-        this.serialPortBuilder = serialPortBuilder;
+	private SerialBuilder<?, ?> serialBuilder;
+
+    public SerialLayer(int timeout, SerialBuilder<?, ?> serialInfo) {
         this.timeout = timeout;
-    }
+        this.serialBuilder = serialInfo;
+	}
 
-    @Override
+	@Override
     public void open() throws IOException {
-        serialPort = serialPortBuilder.build();
-        serialPort.setSerialPortTimeout(timeout);
-
-        os = new DataOutputStream(serialPort.getOutputStream());
-        is = new DataInputStream(serialPort.getInputStream());
+        try {
+            portIdentifier = CommPortIdentifier.getPortIdentifier(serialBuilder.getSerialPortName());
+			serialPort = portIdentifier.open("jMBus", timeout);
+            serialPort.setSerialPortParams(serialBuilder.getBaudrate(), serialBuilder.getDataBits(), serialBuilder.getStopBits(),
+                   serialBuilder.getParity());
+	        os = new DataOutputStream(serialPort.getOutputStream());
+	        is = new DataInputStream(serialPort.getInputStream());
+		} catch (PortInUseException | NoSuchPortException | UnsupportedCommOperationException e) {
+			throw new IOException(e);
+		}
     }
 
     @Override
@@ -46,14 +57,10 @@ class SerialLayer implements TransportLayer {
 
     @Override
     public void close() {
-        if (serialPort == null || serialPort.isClosed()) {
+        if (serialPort == null || portIdentifier==null || !portIdentifier.isCurrentlyOwned()) {
             return;
         }
-        try {
-            serialPort.close();
-        } catch (IOException e) {
-            // ignore
-        }
+        serialPort.close();
     }
 
     @Override
@@ -63,12 +70,16 @@ class SerialLayer implements TransportLayer {
 
     @Override
     public void setTimeout(int timeout) throws IOException {
-        serialPort.setSerialPortTimeout(timeout);
+        try {
+			serialPort.enableReceiveTimeout(timeout);
+		} catch (UnsupportedCommOperationException e) {
+			throw new IOException(e);
+		}
     }
 
     @Override
     public int getTimeout() {
-        return serialPort.getSerialPortTimeout();
+        return serialPort.getReceiveTimeout();
     }
 
 }

@@ -16,7 +16,6 @@ import org.openmuc.jmbus.MBusConnection;
 import org.openmuc.jmbus.SecondaryAddress;
 import org.openmuc.jmbus.SecondaryAddressListener;
 import org.openmuc.jmbus.VariableDataStructure;
-import org.openmuc.jrxtx.SerialPortTimeoutException;
 
 class CliConnection {
 
@@ -52,9 +51,6 @@ class CliConnection {
         if (secondaryAddress != null) {
             try {
                 mBusConnection.selectComponent(secondaryAddress);
-            } catch (SerialPortTimeoutException e) {
-                mBusConnection.close();
-                cliPrinter.printError("Selecting secondary address attempt timed out.", false);
             } catch (IOException e) {
                 mBusConnection.close();
                 cliPrinter.printError("Error selecting secondary address: " + e.getMessage(), false);
@@ -67,9 +63,6 @@ class CliConnection {
         try {
             mBusConnection.write(primaryAddress, dataRecord);
             cliPrinter.printInfo("Data was sent.");
-        } catch (SerialPortTimeoutException e) {
-            mBusConnection.close();
-            cliPrinter.printError("Write attempt timed out.", false);
         } catch (IOException e) {
             mBusConnection.close();
             cliPrinter.printError("Error writing meter: " + e.getMessage(), false);
@@ -93,9 +86,6 @@ class CliConnection {
         if (secondaryAddress != null) {
             try {
                 mBusConnection.selectComponent(secondaryAddress);
-            } catch (SerialPortTimeoutException e) {
-                mBusConnection.close();
-                cliPrinter.printError("Selecting secondary address attempt timed out.", false);
             } catch (IOException e) {
                 mBusConnection.close();
                 cliPrinter.printError("Error selecting secondary address: " + e.getMessage(), false);
