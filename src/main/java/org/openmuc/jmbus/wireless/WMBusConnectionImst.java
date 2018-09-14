@@ -298,14 +298,21 @@ class WMBusConnectionImst extends AbstractWMBusConnection {
             byte b0;
             byte b1;
 
-            transportLayer.setTimeout(0);
-            b0 = is.readByte();
+            transportLayer.setTimeout(MESSAGE_FRAGEMENT_TIMEOUT);
+            do {
+                b0 = is.readByte();
+            } while (b0 == -1);
+
             if (b0 != Const.START_OF_FRAME) {
                 String msg = String.format("First byte does not start with %02X.", Const.START_OF_FRAME);
                 throw new IOException(msg);
             }
 
-            transportLayer.setTimeout(MESSAGE_FRAGEMENT_TIMEOUT);
+            try {
+            	// we have to wait for a short moment as otherwise
+            	// the next byte will be -1 immediately as well
+				Thread.sleep(50);
+			} catch (InterruptedException e) {}
             // this may time out.
             b1 = is.readByte();
 

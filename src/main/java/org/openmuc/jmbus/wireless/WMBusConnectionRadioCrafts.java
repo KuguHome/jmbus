@@ -85,15 +85,20 @@ class WMBusConnectionRadioCrafts extends AbstractWMBusConnection {
         private byte[] initMessageData() throws IOException {
             byte b0, b1;
             while (true) {
-                this.transportLayer.setTimeout(0);
-                b0 = getInputStream().readByte();
                 this.transportLayer.setTimeout(MESSAGE_FRAGEMENT_TIMEOUT);
+                do {
+                    b0 = getInputStream().readByte();
+                } while (b0 == -1);
 
                 try {
-                    // this may time out.
-                    b1 = getInputStream().readByte();
-                } catch (InterruptedIOException e) {
-                    continue;
+                	// we have to wait for a short moment as otherwise
+                	// the next byte will be -1 immediately as well
+					Thread.sleep(50);
+				} catch (InterruptedException e) {}
+                b1 = getInputStream().readByte();
+                if(b1 == -1) {
+                	// we ran into a timeout
+                	continue;
                 }
 
                 if (b1 == CONTROL_BYTE) {

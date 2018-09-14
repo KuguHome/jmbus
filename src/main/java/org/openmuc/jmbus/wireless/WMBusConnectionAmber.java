@@ -63,10 +63,20 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             DataInputStream is = getInputStream();
             while (true) {
                 try {
-                    this.transportLayer.setTimeout(0);
-                    b0 = is.read();
                     this.transportLayer.setTimeout(MESSAGE_FRAGEMENT_TIMEOUT);
+                    do {
+                        b0 = is.read();
+                    } while (b0 == -1);
+                    try {
+                    	// we have to wait for a short moment as otherwise
+                    	// the next byte will be -1 immediately as well
+						Thread.sleep(50);
+					} catch (InterruptedException e) {}
                     b1 = is.read();
+                    if(b1 == -1) {
+                    	// we ran into a timeout
+                    	continue;
+                    }
 
                     if (b0 == 0xff && b1 == 0x03) {
                         // it's optional if UART_CMD_Out_Enable is enabled on amber module
@@ -134,8 +144,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             int rssiOffset = 74;
             if (rssi >= 128) {
                 signalStrengthInDBm = ((rssi - 256) / 2) - rssiOffset;
-            }
-            else {
+            } else {
                 signalStrengthInDBm = (rssi / 2) - rssiOffset;
             }
 
