@@ -21,7 +21,7 @@ import javax.xml.bind.DatatypeConverter;
 
 /**
  * Representation of the data transmitted in RESP-UD (M-Bus) and SND-NR (wM-Bus) messages.
- * 
+ *
  * @see #decode()
  */
 public class VariableDataStructure {
@@ -66,7 +66,7 @@ public class VariableDataStructure {
 
     /**
      * This method is used to
-     * 
+     *
      * @throws DecodingException
      */
     public void decode() throws DecodingException {
@@ -75,45 +75,44 @@ public class VariableDataStructure {
                 int ciField = readUnsignedByte(buffer, offset);
 
                 switch (ciField) {
-                case 0x72:
-                    decodeLongHeaderData();
-                    break;
-                case 0x78: /* no header */
-                    encryptionMode = EncryptionMode.NONE;
-                    decodeDataRecords(buffer, offset + 1, length - 1);
-                    break;
-                case 0x7a: /* short header */
-                    decodeWithShortHeader();
-                    break;
-                case 0x8d: /* ELL */
-                    decodeExtendedLinkLayer(buffer, offset + 1); // 6 bytes header + CRC
-                    header = Arrays.copyOfRange(buffer, offset, offset + 7); // don't include CRC
-                    vdr = new byte[length - 7];
-                    System.arraycopy(buffer, offset + 7, vdr, 0, length - 7);
-                    if (encryptionMode.equals(EncryptionMode.AES_128)) {
-                        decryptMessage(getKey());
-                    }
+                    case 0x72:
+                        decodeLongHeaderData();
+                        break;
+                    case 0x78: /* no header */
+                        encryptionMode = EncryptionMode.NONE;
+                        decodeDataRecords(buffer, offset + 1, length - 1);
+                        break;
+                    case 0x7a: /* short header */
+                        decodeWithShortHeader();
+                        break;
+                    case 0x8d: /* ELL */
+                        decodeExtendedLinkLayer(buffer, offset + 1); // 6 bytes header + CRC
+                        header = Arrays.copyOfRange(buffer, offset, offset + 7); // don't include CRC
+                        vdr = new byte[length - 7];
+                        System.arraycopy(buffer, offset + 7, vdr, 0, length - 7);
+                        if (encryptionMode.equals(EncryptionMode.AES_128)) {
+                            decryptMessage(getKey());
+                        }
 
-                    if ((vdr[2] & 0xff) == 0x78) {
-                        decodeDataRecords(vdr, 3, length - 10);
-                    }
-                    else if ((vdr[2] & 0xff) == 0x79) {
-                        decodeShortFrame(vdr, 3, length - 10);
-                    }
-                    break;
-                case 0x33:
-                    String msg = String.format(
-                            "Received telegram with CI 0x33. Decoding not implemented. Device Serial: %s, Manufacturer: %s.",
-                            linkLayerSecondaryAddress.getDeviceId().toString(),
-                            linkLayerSecondaryAddress.getManufacturerId());
-                    throw new DecodingException(msg);
-                default:
-                    String strFormat = "Unable to decode message with this CI Field: 0x%02X.";
-                    if ((ciField >= 0xA0) && (ciField <= 0xB7)) {
-                        strFormat = "Manufacturer specific CI: 0x%02X.";
-                    }
+                        if ((vdr[2] & 0xff) == 0x78) {
+                            decodeDataRecords(vdr, 3, length - 10);
+                        } else if ((vdr[2] & 0xff) == 0x79) {
+                            decodeShortFrame(vdr, 3, length - 10);
+                        }
+                        break;
+                    case 0x33:
+                        String msg = String.format(
+                                "Received telegram with CI 0x33. Decoding not implemented. Device Serial: %s, Manufacturer: %s.",
+                                linkLayerSecondaryAddress.getDeviceId().toString(),
+                                linkLayerSecondaryAddress.getManufacturerId());
+                        throw new DecodingException(msg);
+                    default:
+                        String strFormat = "Unable to decode message with this CI Field: 0x%02X.";
+                        if ((ciField >= 0xA0) && (ciField <= 0xB7)) {
+                            strFormat = "Manufacturer specific CI: 0x%02X.";
+                        }
 
-                    throw new DecodingException(String.format(strFormat, ciField));
+                        throw new DecodingException(String.format(strFormat, ciField));
                 }
             } catch (RuntimeException e) {
                 throw new DecodingException(e);
@@ -127,11 +126,9 @@ public class VariableDataStructure {
         decodeShortHeader(buffer, offset + 1);
         if (encryptionMode == EncryptionMode.NONE) {
             decodeDataRecords(buffer, offset + 5, length - 5);
-        }
-        else if (encryptionMode == EncryptionMode.AES_CBC_IV) {
+        } else if (encryptionMode == EncryptionMode.AES_CBC_IV) {
             decryptAesCbcIv(buffer, offset + 5, numberOfEncryptedBlocks * 16);
-        }
-        else {
+        } else {
             throw new DecodingException("Unsupported encryption mode used: " + encryptionMode);
         }
     }
@@ -165,8 +162,7 @@ public class VariableDataStructure {
 
         if (encryptionMode == EncryptionMode.AES_CBC_IV) {
             decryptMessage(getKey());
-        }
-        else if (encryptionMode != EncryptionMode.NONE) {
+        } else if (encryptionMode != EncryptionMode.NONE) {
             throw new DecodingException("Unsupported encryption mode used: " + encryptionMode);
         }
         decodeDataRecords(vdr, 0, length - headerLength);
@@ -332,14 +328,14 @@ public class VariableDataStructure {
         }
 
         switch (encryptionMode) {
-        case AES_CBC_IV:
-            decryptAesCbcIv(key, len);
-            break;
-        case AES_128:
-            decryptAes128(key, len);
-            break;
-        default:
-            throw new DecodingException("Unsupported encryption mode: " + encryptionMode);
+            case AES_CBC_IV:
+                decryptAesCbcIv(key, len);
+                break;
+            case AES_128:
+                decryptAes128(key, len);
+                break;
+            default:
+                throw new DecodingException("Unsupported encryption mode: " + encryptionMode);
         }
 
         return vdr;
@@ -380,8 +376,7 @@ public class VariableDataStructure {
             System.arraycopy(saBytes, 0, iv, 4, 2); // Manufacture
             System.arraycopy(saBytes, 2, iv, 0, 4); // Identification
             System.arraycopy(saBytes, 6, iv, 6, 2); // Version and Device Type
-        }
-        else {
+        } else {
             System.arraycopy(saBytes, 0, iv, 0, 8);
         }
 
@@ -423,8 +418,15 @@ public class VariableDataStructure {
         if (!decoded) {
             int from = offset;
             int to = from + length;
-            String hexString = DatatypeConverter.printHexBinary(Arrays.copyOfRange(buffer, from, to));
-            return MessageFormat.format("VariableDataResponse has not been decoded. Bytes:\n{0}", hexString);
+            if (to < from) {
+                to = from;
+                String hexString = DatatypeConverter.printHexBinary(Arrays.copyOfRange(buffer, from, to));
+                return MessageFormat.format("Buffers \'from\' and \'to\' aren't equal for arrays'copying. Extending."
+                        + "VariableDataResponse has not been decoded. Bytes:\n{0}", hexString);
+            } else {
+                String hexString = DatatypeConverter.printHexBinary(Arrays.copyOfRange(buffer, from, to));
+                return MessageFormat.format("VariableDataResponse has not been decoded. Bytes:\n{0}", hexString);
+            }
         }
 
         StringBuilder builder = new StringBuilder();
@@ -433,15 +435,9 @@ public class VariableDataStructure {
             builder.append("Secondary address: {").append(secondaryAddress).append("}\n");
         }
 
-        builder.append("Short Header: {Access No.: ")
-                .append(accessNumber)
-                .append(", status: ")
-                .append(status)
-                .append(", encryption mode: ")
-                .append(encryptionMode)
-                .append(", number of encrypted blocks: ")
-                .append(numberOfEncryptedBlocks)
-                .append("}");
+        builder.append("Short Header: {Access No.: ").append(accessNumber).append(", status: ").append(status)
+                .append(", encryption mode: ").append(encryptionMode).append(", number of encrypted blocks: ")
+                .append(numberOfEncryptedBlocks).append("}");
 
         for (DataRecord dataRecord : dataRecords) {
             builder.append("\n").append(dataRecord.toString());
