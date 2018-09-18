@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -25,6 +26,8 @@ import javax.xml.bind.DatatypeConverter;
  * @see #decode()
  */
 public class VariableDataStructure {
+
+    Logger logger = Logger.getLogger(VariableDataStructure.class.getName());
 
     private static final ConcurrentHashMap<SecondaryAddress, List<DataRecord>> deviceHistory = new ConcurrentHashMap<>();
 
@@ -418,8 +421,16 @@ public class VariableDataStructure {
         if (!decoded) {
             int from = offset;
             int to = from + length;
+            if (from < 0) {
+                from = 0;
+            }
+            if (from > buffer.length) {
+                from = buffer.length;
+            }
             if (to < from) {
                 to = from;
+                logger.info(
+                        "Buffer: " + buffer.length + "; Length: " + length + "; From: " + from + "; To: " + to + ";");
                 String hexString = DatatypeConverter.printHexBinary(Arrays.copyOfRange(buffer, from, to));
                 return MessageFormat.format("Buffers \'from\' and \'to\' aren't equal for arrays'copying. Extending."
                         + "VariableDataResponse has not been decoded. Bytes:\n{0}", hexString);
