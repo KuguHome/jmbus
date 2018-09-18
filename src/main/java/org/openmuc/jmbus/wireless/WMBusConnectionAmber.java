@@ -68,14 +68,15 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
                         b0 = is.read();
                     } while (b0 == -1);
                     try {
-                    	// we have to wait for a short moment as otherwise
-                    	// the next byte will be -1 immediately as well
-						Thread.sleep(50);
-					} catch (InterruptedException e) {}
+                        // we have to wait for a short moment as otherwise
+                        // the next byte will be -1 immediately as well
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                    }
                     b1 = is.read();
-                    if(b1 == -1) {
-                    	// we ran into a timeout
-                    	continue;
+                    if (b1 == -1) {
+                        // we ran into a timeout
+                        continue;
                     }
 
                     if ((b1 ^ MBUS_BL_CONTROL) == 0) {
@@ -99,6 +100,9 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             data[0] = (byte) b0;
             data[1] = (byte) b1;
 
+            if (len < 2) {
+                len = 2;
+            }
             int readLength = len - 2;
             int actualLength = is.read(data, 2, readLength);
 
@@ -162,37 +166,37 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
 
     /**
      * @param mode
-     *            - the wMBus mode to be used for transmission
+     *                 - the wMBus mode to be used for transmission
      * @throws IOException
      */
     @Override
     protected void initializeWirelessTransceiver(WMBusMode mode) throws IOException {
         switch (mode) {
-        case S:
-            amberSetReg((byte) 0x46, (byte) 0x03);
-            break;
-        case T:
-            amberSetReg((byte) 0x46, (byte) 0x08); // T2-OTHER (correct for receiving station in T mode)
-            break;
-        case C:
-            amberSetReg((byte) 0x46, (byte) 0x0e); // C2-OTHER
-            break;
-        default:
-            String message = MessageFormat.format("wMBUS Mode ''{0}'' is not supported", mode.toString());
-            throw new IOException(message);
+            case S:
+                amberSetReg((byte) 0x46, (byte) 0x03);
+                break;
+            case T:
+                amberSetReg((byte) 0x46, (byte) 0x08); // T2-OTHER (correct for receiving station in T mode)
+                break;
+            case C:
+                amberSetReg((byte) 0x46, (byte) 0x0e); // C2-OTHER
+                break;
+            default:
+                String message = MessageFormat.format("wMBUS Mode ''{0}'' is not supported", mode.toString());
+                throw new IOException(message);
         }
         amberSetReg((byte) 0x45, (byte) 0x01); // Enable attaching RSSI to message
     }
 
     /**
      * Writes a {@code CMD_SET_REQ} to the Amber module.
-     * 
+     *
      * @param cmd
-     *            register address of the Amber module.
+     *                 register address of the Amber module.
      * @param data
-     *            new value(s) for this register address(es).
+     *                 new value(s) for this register address(es).
      * @throws IOException
-     *             if an error occurred, while writing the command.
+     *                         if an error occurred, while writing the command.
      */
     private void writeCommand(byte cmd, byte[] data) throws IOException {
         DataOutputStream os = getOutputStream();
@@ -219,9 +223,9 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
 
     /**
      * Writes a reset command to the Amber module
-     * 
+     *
      * @throws IOException
-     *             if the reset command failed.
+     *                         if the reset command failed.
      */
     private void reset() throws IOException {
         writeCommand((byte) 0x05, new byte[] {});
