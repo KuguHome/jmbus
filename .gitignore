@@ -2,3 +2,6 @@
 /build/
 /cli-app/build/
 /bin/
+.classpath
+.project
+.settings/
