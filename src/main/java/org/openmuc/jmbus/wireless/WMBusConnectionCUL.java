@@ -5,16 +5,22 @@
  */
 package org.openmuc.jmbus.wireless;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
-import java.text.MessageFormat;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
 
 import org.openmuc.jmbus.DecodingException;
 import org.openmuc.jmbus.transportlayer.TransportLayer;
 
 class WMBusConnectionCUL extends AbstractWMBusConnection {
+	
+	private BufferedReader br;
+	private BufferedWriter bw;
 
     private class MessageReceiverImpl extends MessageReceiver {
 
@@ -24,6 +30,8 @@ class WMBusConnectionCUL extends AbstractWMBusConnection {
 
         private final byte[] discardBuffer = new byte[BUFFER_LENGTH];
         private int bufferPointer = 0;
+        
+
 
         public MessageReceiverImpl(TransportLayer transportLayer, WMBusListener listener) {
             super(listener);
@@ -35,12 +43,9 @@ class WMBusConnectionCUL extends AbstractWMBusConnection {
             try {
 
                 while (!isClosed()) {
-
                     byte[] messageData = initMessageData();
-
                     int len = messageData.length - 2;
                     handleData(messageData, len);
-
                 }
             } catch (final IOException e) {
                 if (!isClosed()) {
@@ -70,11 +75,21 @@ class WMBusConnectionCUL extends AbstractWMBusConnection {
         }
         
         private byte[] initMessageData() throws IOException {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e1) {	}
+
             byte b0, b1;
             while (true) {
-                this.transportLayer.setTimeout(MESSAGE_FRAGEMENT_TIMEOUT);
+//                this.transportLayer.setTimeout(MESSAGE_FRAGEMENT_TIMEOUT);
                 do {
-                    b0 = getInputStream().readByte();
+                    System.out.println(23);
+                    String line = br.readLine();
+                    System.out.println(line);
+                    b0 = (byte) line.charAt(0);
+//                	b0 = getInputStream().readByte();
+                    System.out.println(24);
+
                 } while (b0 == -1);
 
                 try {
@@ -131,6 +146,8 @@ class WMBusConnectionCUL extends AbstractWMBusConnection {
 
     }
 
+
+
     public WMBusConnectionCUL(WMBusMode mode, WMBusListener listener, TransportLayer tl) {
         super(mode, listener, tl);
     }
@@ -149,11 +166,26 @@ class WMBusConnectionCUL extends AbstractWMBusConnection {
     protected void initializeWirelessTransceiver(WMBusMode mode) throws IOException {
 
         DataOutputStream os = getOutputStream();
+        
+        br = new BufferedReader(new InputStreamReader(getInputStream()));
+        bw = new BufferedWriter(new OutputStreamWriter(os));
 
-        // send vrT
+//        bw.flush();
+        bw.write("brt\r\n");
+        bw.flush();
+    	System.out.println("00"); 
+//		try {
+//			Thread.sleep(500);
+//		} catch (InterruptedException e1) {	}
+        String line = br.readLine();
+//    	System.out.println("01");
+    	System.out.println(line); 
+        if (!line.equals("TMODE")) {
+        	System.out.println("CLOSING");
+            close();
+        }
 
-        os.write(0x58);
-        os.flush();
+
     }
 
 }

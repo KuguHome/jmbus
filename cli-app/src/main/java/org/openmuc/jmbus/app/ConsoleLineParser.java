@@ -263,6 +263,8 @@ class ConsoleLineParser {
             return WMBusManufacturer.RADIO_CRAFTS;
         case "imst":
             return WMBusManufacturer.IMST;
+        case "cul":
+            return WMBusManufacturer.CUL;
         default:
             this.cliPrinter.printError("Not supported transceiver.", true);
             throw new RuntimeException();
