@@ -101,6 +101,15 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             }
 
             int length = (b0 & 0xff) + 1; // +1 because length don't count the length byte itself
+
+            // min. length not to trip exception on is.read would be 2+1,
+            // but according to Amber stick manual, min. length is 10; shorter messages lead to exceptions in VDR.toString() later
+            if (length <= 10) {
+                System.err.println("short message length received: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len(b0 as uint8 + 1)=" + length);
+                reset();
+                return;
+            }
+
             byte[] data = new byte[length];
 
             data[0] = (byte) b0;
