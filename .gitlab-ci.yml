@@ -17,7 +17,7 @@ before_script:
 build:
   stage: build
   script:
-    - gradle --build-cache assemble
+    - gradle --build-cache clean assemble
   cache:
     key: "gradle-jrxtx"
     paths:
