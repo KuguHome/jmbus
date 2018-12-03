@@ -104,7 +104,7 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
 
             // min. length not to trip exception on is.read would be 2+1,
             // but according to Amber stick manual, min. length is 10; shorter messages lead to exceptions in VDR.toString() later
-            if (length <= 10) {
+            if (length <= 2) {
                 System.err.println("short message length received: b0=" + b0 + ", b0(b0 & 0xFF)=" + (b0 & 0xff) + ", len(b0 as uint8 + 1)=" + length);
                 reset();
                 return;
