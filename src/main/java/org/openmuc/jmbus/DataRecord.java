@@ -191,6 +191,11 @@ public class DataRecord {
     private boolean dateTypeG = false;
 
     int dataLength;
+    byte[] rawData;
+
+    public byte[] getRawData() {
+        return rawData;
+    }
 
     int decode(byte[] buffer, int offset) throws DecodingException {
         int i = offset;
@@ -409,6 +414,7 @@ public class DataRecord {
             }
             i += dataLength0x0d;
 
+            this.rawData = rawData;
             dataValue = new String(rawData);
             dataValueType = DataValueType.STRING;
             break;
