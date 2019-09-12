@@ -565,12 +565,21 @@ messages in modes S, T and C2 at the moment. Encryption modes 1 and 5 are suppor
 <h3 id="_wired_m_bus">2.1. Wired M-Bus</h3>
 <div class="paragraph">
 <p>The first thing to do in order to communicate with a M-Bus device is to establish
-a new connection.</p>
+a new connection. You can build a TCP or a serial connection.</p>
 </div>
 <div class="listingblock">
-<div class="title">Opening a new M-Bus connection.</div>
+<div class="title">Opening a new M-Bus serial connection.</div>
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="java">MBusSerialBuilder builder = MBusConnection.newSerialBuilder(<span class="string"><span class="delimiter">&quot;</span><span class="content">/dev/ttyS0</span><span class="delimiter">&quot;</span></span>).setBaudrate(<span class="integer">2400</span>);
+<span class="keyword">try</span> (MBusConnection mBusConnection = builder.build()) {
+    <span class="comment">// read/write</span>
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Opening a new M-Bus TCP connection.</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">MBusTcpBuilder builder = MBusConnection.newTcpBuilder(<span class="string"><span class="delimiter">&quot;</span><span class="content">192.168.2.15</span><span class="delimiter">&quot;</span></span>, <span class="integer">1234</span>);
 <span class="keyword">try</span> (MBusConnection mBusConnection = builder.build()) {
     <span class="comment">// read/write</span>
 }</code></pre>
@@ -586,20 +595,8 @@ response is returned by the read function.</p>
 <div class="listingblock">
 <div class="title">Read from Device.</div>
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="java">            <span class="type">int</span> primaryAddress = <span class="integer">1</span>;
-            mBusConnection.read(primaryAddress);
-        }
-    }
-
-    <span class="directive">public</span> <span class="directive">static</span> <span class="type">void</span> write() <span class="directive">throws</span> <span class="exception">IOException</span> {
-        MBusSerialBuilder builder = MBusConnection.newSerialBuilder(<span class="string"><span class="delimiter">&quot;</span><span class="content">/dev/ttyS0</span><span class="delimiter">&quot;</span></span>).setBaudrate(<span class="integer">2400</span>);
-        <span class="keyword">try</span> (MBusConnection mBusConnection = builder.build()) {
-            <span class="type">int</span> primaryAddress = <span class="integer">5</span>;
-            <span class="type">byte</span><span class="type">[]</span> data = { <span class="hex">0x01</span>, <span class="hex">0x7a</span>, <span class="hex">0x09</span> };
-            mBusConnection.write(primaryAddress, data);
-        }
-    }
-}</code></pre>
+<pre class="CodeRay highlight"><code data-lang="java"><span class="type">int</span> primaryAddress = <span class="integer">1</span>;
+mBusConnection.read(primaryAddress);</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1051,7 +1048,7 @@ instructions on our FAQ site: <a href="https://www.openmuc.org/faq/" class="bare
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-11-12 10:49:18 MEZ
+Last updated 2019-06-14 14:33:06 MESZ
 </div>
 </div>
 </body>
