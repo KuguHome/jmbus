@@ -456,8 +456,21 @@ public class VariableDataStructure {
             if (dataRecords.isEmpty()) {
                 int from = offset;
                 int to = from + length;
-                String hexString = HexUtils.bytesToHex(Arrays.copyOfRange(buffer, from, to));
-                return MessageFormat.format("VariableDataResponse has not been decoded. Bytes:\n{0}", hexString);
+                if (from < 0) {
+                    from = 0;
+                }
+                if (from > buffer.length) {
+                    from = buffer.length;
+                }
+                if (to < from) {
+                    to = from;
+                    String hexString = DatatypeConverter.printHexBinary(Arrays.copyOfRange(buffer, from, to));
+                    return MessageFormat.format("Buffers \'from\' and \'to\' aren't equal for arrays'copying. Extending."
+                            + "VariableDataResponse has not been decoded. Bytes:\n{0}", hexString);
+                } else {
+                  String hexString = HexUtils.bytesToHex(Arrays.copyOfRange(buffer, from, to));
+                  return MessageFormat.format("VariableDataResponse has not been decoded. Bytes:\n{0}", hexString);
+              }
             }
             else {
                 builder.append("VariableDataResponse has not been fully decoded. " + dataRecords.size()
