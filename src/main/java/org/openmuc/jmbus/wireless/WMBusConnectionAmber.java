@@ -91,8 +91,17 @@ class WMBusConnectionAmber extends AbstractWMBusConnection {
             }
 
             int length = (b0 & 0xff) + 1; // +1 because length don't count the length byte itself
+            if (length <= 2) {
+                reset();
+                return;
+            }
+
             byte[] data = new byte[length];
 
+            if (length = 2) {
+              discard(data, 0, 1);
+              return;
+            }
             data[0] = (byte) b0;
             data[1] = (byte) b1;
 
